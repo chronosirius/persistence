@@ -9,7 +9,7 @@ def persistent_component(self, tag: str):
     """
 
     def inner(coro):
-        self.persistence.component(tag)(coro)
+        return self.persistence.component(tag)(coro)
 
     return inner
 
@@ -25,6 +25,6 @@ def persistent_modal(self, tag: str, use_kwargs: bool = False):
     """
 
     def inner(coro):
-        self.persistence.modal(tag, use_kwargs)(coro)
+        return self.persistence.modal(tag, use_kwargs)(coro)
 
     return inner

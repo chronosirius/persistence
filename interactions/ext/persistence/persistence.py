@@ -87,10 +87,7 @@ class Persistence(Extension):
             logging.info("Interaction made with invalid persistent custom_id. Skipping.")
 
         if pid.tag in self._component_callbacks:
-            if ctx.data.values:
-                await self._component_callbacks[pid.tag](ctx, pid.package, ctx.data.values)
-            else:
-                await self._component_callbacks[pid.tag](ctx, pid.package)
+            await self._component_callbacks[pid.tag](ctx, pid.package)
 
     @extension_listener
     async def on_modal(self, ctx: CommandContext):

@@ -9,7 +9,7 @@ setup(
     description="Encode json in custom_ids.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/Dworv/interactions-persistence",
+    url="https://github.com/interactions-py/persistence",
     author="Dworv",
     author_email="dwarvyt@gmail.com",
     license="GNU",

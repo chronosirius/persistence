@@ -4,7 +4,7 @@ from interactions.ext import Base, Version, VersionAuthor
 from .persistence import Persistence
 
 version = Version(
-    version="2.2.2",
+    version="2.2.3",
     author=VersionAuthor(
         name="Dworv",
         email="dwarvyt@gmail.com",

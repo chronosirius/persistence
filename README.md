@@ -15,4 +15,6 @@ The solution, originally conceived and executed by [Toricane](https://github.com
 ## Further abstraction
 Interactions-Persistence further simplifies placing objects in custom_ids using the json and allowing str, int, float, dict and list. The extension also encrypts custom_ids so it isn't obvious what they are doing. Using this ext is not only incredibly simple, but also reliable and lightweight. Taking a similar approach to [Enhanced](https://github.com/interactions-py/enhanced), Persistence uses `on_component` and `on_modal` listeners to identify and properly call persistent decorators.
 
+This is a finished project, but it is being maintained and could accept new features. If you feel like you could contribute, please make an issue first. Thanks.
+
 Enjoy!

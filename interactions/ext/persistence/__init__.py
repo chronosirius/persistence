@@ -1,4 +1,4 @@
-from .base import base, version, setup
+#from .base import base, version, setup
 from .cipher import Cipher
 from .extension import (
     PersistenceExtension,

@@ -3,16 +3,17 @@
 from json import JSONDecodeError
 import logging
 from types import MethodType
-from typing import Callable, Dict, Tuple, Union
+from typing import Callable, Dict, Optional, Tuple, Union
+from collections.abc import Awaitable
 
-from interactions import Extension, CommandContext, ComponentContext, extension_listener
+import interactions as inter
 
 from .cipher import Cipher
 from .client import persistent_component, persistent_modal
 from .parse import PersistentCustomID
 
 
-class Persistence(Extension):
+class Persistence(inter.Extension):
     """
     The Persistence extension.
 
@@ -31,8 +32,18 @@ class Persistence(Extension):
         self._cipher = Cipher(cipher_key)
 
         #TODO: Decide whether the following should stay typehinted or not.
-        self._component_callbacks: Dict[str, Callable[[ComponentContext, Union[str, int, float, list, dict]], None]] = {}
-        self._modal_callbacks: Dict[str, Tuple[Callable[[ComponentContext, Union[str, int, float, list, dict]], None], bool]] = {}
+        self._component_callbacks: Dict[str, 
+                                        Callable[
+                                            [inter.ComponentContext, Union[str, int, float, list, dict]], #arguments
+                                            Awaitable[Union[list, None]] #return type
+                                        ]
+                                        ] = {}
+        self._modal_callbacks: Dict[str,
+                                        Callable[
+                                            [inter.ModalContext, Union[str, int, float, list, dict]], #arguments
+                                            Awaitable[None]
+                                        ], #return type
+                                    ] = {}
 
         # set as bot.persistence for convenience
         bot.persistence = self
@@ -55,62 +66,54 @@ class Persistence(Extension):
 
         return inner
 
-    def modal(self, tag: str, use_kwargs: bool = False):
+    def modal(self, tag: str):
         """
         The persistent modal decorator.
 
         Parameters:
             tag (str): The tag to identify your modal.
-            use_kwargs (bool): Whether to return key word arguments mapped with the custom_ids of the individual text inputs. Not recommended.
-                (defaults to False)
         """
 
         def inner(coro):
-            self._modal_callbacks[tag] = (coro, use_kwargs)
+            self._modal_callbacks[tag] = coro
             logging.debug(f"Registered persistent modal: {tag}")
             return coro
 
         return inner
 
-    @extension_listener
-    async def on_component(self, ctx: ComponentContext):
+    @inter.listen()
+    async def on_component(self, ev: inter.events.Component):
         """The on_component listener. This is called when a component is used."""
         if not any((
-            ctx.custom_id.startswith("p~"),
-            ctx.custom_id[0] == "p" and ctx.custom_id[2] == "~"
+            ev.ctx.custom_id.startswith("p~"),
+            ev.ctx.custom_id[0] == "p" and ev.ctx.custom_id[2] == "~"
         )):
             return
 
         try:
-            pid = PersistentCustomID.from_discord(self._cipher, ctx.custom_id)
+            pid = PersistentCustomID.from_discord(self._cipher, ev.ctx.custom_id)
         except JSONDecodeError:
             logging.info("Interaction made with invalid persistent custom_id. Skipping.")
+            return
 
         if pid.tag in self._component_callbacks:
-            if ctx.data.values:
-                await self._component_callbacks[pid.tag](ctx, pid.package, ctx.data.values)
-            else:
-                await self._component_callbacks[pid.tag](ctx, pid.package)
+            await self._component_callbacks[pid.tag](ev.ctx, pid.package)
 
-    @extension_listener
-    async def on_modal(self, ctx: CommandContext):
+    @inter.listen()
+    async def on_modal(self, ev: inter.events.ModalCompletion):
         """The on_modal listener. This is called when a modal is submitted."""
         if not any((
-            ctx.data.custom_id.startswith("p~"),
-            ctx.data.custom_id[0] == "p" and ctx.data.custom_id[2] == "~"
+            ev.ctx.custom_id.startswith("p~"),
+            ev.ctx.custom_id[0] == "p" and ev.ctx.custom_id[2] == "~"
         )):
             return
 
         try:
-            pid = PersistentCustomID.from_discord(self._cipher, ctx.data.custom_id)
+            pid = PersistentCustomID.from_discord(self._cipher, ev.ctx.custom_id)
         except JSONDecodeError:
             logging.info("Interaction made with invalid persistent custom_id. Skipping.")
+            return
 
-        if callback := self._modal_callbacks.get(pid.tag):
-            if callback[1] == 0:
-                args = [item.components[0].value for item in ctx.data.components]
-
-                await self._modal_callbacks[pid.tag][0](ctx, pid.package, *args)
-            else:
-                kwargs = {item.components[0].custom_id: item.components[0].value for item in ctx.data.components}
-                await self._modal_callbacks[pid.tag][0](ctx, pid.package, **kwargs)
+        callback = self._modal_callbacks.get(pid.tag)
+        if callback is not None:
+            await callback(ev.ctx, pid.package)

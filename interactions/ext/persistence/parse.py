@@ -108,19 +108,19 @@ class PersistentCustomID:
             custom_id (str): The custom_id to parse.
         """
         # if its a bot
-        if hasattr(cipher, "persistence"):
-            cipher = cipher.persistence._cipher
+        if isinstance(cipher, Client):
+            cipher_ = cipher.persistence._cipher
         # if its a cipher object
         elif isinstance(cipher, Cipher):
-            cipher = cipher
+            cipher_ = cipher
         # if its a persistence object
         else:
-            cipher = cipher._cipher
+            cipher_ = cipher._cipher
         
         _version, _tag, _payload = custom_id.split("~")
 
         sep = len(_tag)
-        raw = cipher.decrypt(_tag+_payload, _version)
+        raw = cipher_.decrypt(_tag+_payload, _version)
         tag = raw[:sep]
         payload = raw[sep:]
         

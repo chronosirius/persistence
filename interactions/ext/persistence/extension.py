@@ -1,13 +1,13 @@
 """The file holding the PersistenceExension class and all of its functionality."""
 
 from inspect import getmembers, iscoroutinefunction
-from interactions import Extension, Client
+import interactions
 
 
-class PersistenceExtension(Extension):
+class PersistenceExtension(interactions.Extension):
     """The PersistenceExtension is based off of regular Extensions, but adds callbacks for persistent components and modals"""
 
-    def __new__(cls, client: Client, *args, **kwargs):
+    def __new__(cls, client: interactions.Client, *args, **kwargs):
         """
         The extended __new__ dunder method for Persistence Extensions.
 
@@ -17,34 +17,6 @@ class PersistenceExtension(Extension):
         Returns:
             Extension: Returns a basic `interactions.Extension`
         """
-
-        self = super().__new__(cls, client, *args, **kwargs)
-
-        for _, func in getmembers(
-            self, predicate=iscoroutinefunction
-        ):  # credits to toricane for the inspect stuff
-            if hasattr(func, "__persistence_type__"):
-                if func.__persistence_type__ == "component":
-                    client.persistence.component(func.__persistence_tag__)(func)
-                elif func.__persistence_type__ == "modal":
-                    client.persistence.modal(
-                        func.__persistence_tag__, func.__persistence_use_kwargs__
-                    )(func)
-
-        return self
-
-class PersistenceExt:
-    """
-    The PersistenceExt class is meant to be placed before `interactions.Extension` in the inheritences of a user Ext like so:
-    ```py
-    class MyExt(
-        PersistenceExt,
-        Extension
-    )
-    ```
-    It adds callbacks for persistent components and modals
-    """
-    def __new__(cls, client, *args, **kwargs):
 
         self = super().__new__(cls, client, *args, **kwargs)
 

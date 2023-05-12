@@ -14,7 +14,7 @@ def persistent_component(self, tag: str):
     return inner
 
 
-def persistent_modal(self, tag: str, use_kwargs: bool = False):
+def persistent_modal(self, tag: str):
     """
     The persistent modal decorator for the Client object.
 
@@ -25,6 +25,6 @@ def persistent_modal(self, tag: str, use_kwargs: bool = False):
     """
 
     def inner(coro):
-        return self.persistence.modal(tag, use_kwargs)(coro)
+        return self.persistence.modal(tag)(coro)
 
     return inner
